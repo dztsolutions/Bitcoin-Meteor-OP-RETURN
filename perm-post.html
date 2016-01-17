@@ -1,0 +1,52 @@
+<head>
+    <title>perm-post</title>
+</head>
+
+<body>
+<div class="container">
+
+    <h1>Welcome to the OP_RETURN Creator!</h1>
+    {{> loginButtons}}
+
+    {{#if currentUser}}
+
+        {{#if depositBitcoin}}
+            <h3>First, deposit a small amount (0.0001) of bitcoin to {{depositBitcoin}}</h3>
+            <button class="refresh">Refresh Bitcoin Status</button>
+
+        {{/if}}
+
+        <form class="new-message">
+
+            {{#if hasInputs}}
+                <label for="tx">Choose which unspent output you would like to use</label>
+
+                <select class="tx-chooser form-control" id="tx">
+                    <option value="-1" data-id="none">Choose one!</option>
+                    {{#each hasInputs}}
+                        <option value="{{@index}}" data-id={{txid}}>{{txid}}</option>
+                    {{/each}}
+                </select>
+
+
+                <label for="op_return">Enter a message you would like to send to the blockchain</label>
+
+                <input type="text"
+                       name="op_return_message"
+                       id="op_return"
+                       class="form-control"
+                       placeholder="enter a new message to be op_returned here"
+                />
+
+                <br/>
+
+                <button class="btn btn-default" id="submitOpReturn" type="button">Submit</button>
+
+            {{/if}}
+
+        </form>
+
+    {{/if}}
+</div>
+
+</body>

@@ -1,0 +1,79 @@
+{
+  "dependencies": {
+    "bitcoinjs-lib": {
+      "version": "2.1.4",
+      "dependencies": {
+        "bigi": {
+          "version": "1.4.1"
+        },
+        "bip66": {
+          "version": "1.1.0"
+        },
+        "bs58check": {
+          "version": "1.0.6",
+          "dependencies": {
+            "bs58": {
+              "version": "2.0.1"
+            }
+          }
+        },
+        "buffer-equals": {
+          "version": "1.0.3"
+        },
+        "buffer-reverse": {
+          "version": "1.0.0"
+        },
+        "create-hash": {
+          "version": "1.1.2",
+          "dependencies": {
+            "cipher-base": {
+              "version": "1.0.2"
+            },
+            "inherits": {
+              "version": "2.0.1"
+            },
+            "ripemd160": {
+              "version": "1.0.1"
+            },
+            "sha.js": {
+              "version": "2.4.4"
+            }
+          }
+        },
+        "create-hmac": {
+          "version": "1.1.4",
+          "dependencies": {
+            "inherits": {
+              "version": "2.0.1"
+            }
+          }
+        },
+        "ecurve": {
+          "version": "1.0.2"
+        },
+        "randombytes": {
+          "version": "2.0.2"
+        },
+        "typeforce": {
+          "version": "1.6.1",
+          "dependencies": {
+            "inherits": {
+              "version": "2.0.1"
+            }
+          }
+        },
+        "wif": {
+          "version": "1.2.1"
+        }
+      }
+    },
+    "satoshi-bitcoin": {
+      "version": "0.3.0",
+      "dependencies": {
+        "big.js": {
+          "version": "3.1.3"
+        }
+      }
+    }
+  }
+}
