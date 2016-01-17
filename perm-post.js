@@ -7,7 +7,6 @@ createdRecords = new Mongo.Collection("createdRecords");
 // after tx is broadcasted, enter the tx that was created into createdRecords
 
 if (Meteor.isClient) {
-
     var getBitcoinStatus = function () {
         Meteor.call("checkAddressBalance", function (error, results) {
             if (results.data.length > 0) {
@@ -24,89 +23,79 @@ if (Meteor.isClient) {
         });
     };
 
-    if (Meteor.userId()) {
-        Session.set("hasInputs", false);
-        Session.set("depositBitcoin", false);
-
-
-        getBitcoinStatus()
-
-        Tracker.autorun(function () {
-            if (Meteor.userId()) {
-                getBitcoinStatus()
-            }
-        });
-    }
 
     Accounts.ui.config({
         passwordSignupFields: "USERNAME_ONLY"
     });
 
-    Template.body.helpers({
-        hasInputs: function () {
-            console.log(Session.get("hasInputs"));
-            return Session.get("hasInputs");
-        },
-        depositBitcoin: function () {
-            return Session.get("depositBitcoin");
-        }
+    if (Meteor.userId()) {
+        Tracker.autorun(function () {
+            if (Meteor.userId()) {
+                getBitcoinStatus()
+            }
+        });
+        Session.set("hasInputs", false);
+        Session.set("depositBitcoin", false);
+
+        getBitcoinStatus();
 
 
-    });
-
-    Template.body.events({
-        "click .refresh": function () {
-            getBitcoinStatus()
-        },
-        "change [id=tx]": function (evt) {
-            var selectedTx = Session.get("hasInputs")[$(evt.target).val()];
-            Session.set("selectedTx", selectedTx);
-        },
-        "change [id=op_return]": function (evt) {
-            var message = $(evt.target).val();
-            Session.set("opReturnMessage", message);
-        },
-        "click [id=submitOpReturn]": function (evt) {
-            evt.preventDefault();
-            var submission = {
-                "message": Session.get("opReturnMessage"),
-                "tx": Session.get("selectedTx")
-            };
-
-            if (!submission.tx) {
-                return alert("please select a tx")
+        Template.body.helpers({
+            hasInputs: function () {
+                console.log(Session.get("hasInputs"));
+                return Session.get("hasInputs");
+            },
+            depositBitcoin: function () {
+                return Session.get("depositBitcoin");
             }
 
-            if (!submission.message || submission.message === "") {
-                return alert("please enter a message")
+
+        });
+
+        Template.body.events({
+            "click .refresh": function () {
+                getBitcoinStatus()
+            },
+            "change [id=tx]": function (evt) {
+                var selectedTx = Session.get("hasInputs")[$(evt.target).val()];
+                Session.set("selectedTx", selectedTx);
+            },
+            "change [id=op_return]": function (evt) {
+                var message = $(evt.target).val();
+                Session.set("opReturnMessage", message);
+            },
+            "click [id=submitOpReturn]": function (evt) {
+                evt.preventDefault();
+                var submission = {
+                    "message": Session.get("opReturnMessage"),
+                    "tx": Session.get("selectedTx")
+                };
+
+                if (!submission.tx) {
+                    return alert("please select a tx")
+                }
+
+                if (!submission.message || submission.message === "") {
+                    return alert("please enter a message")
+                }
+
+                console.log(submission);
             }
-
-            console.log(submission);
-        }
-    });
-
-
-    //Template.hello.helpers({
-    //    counter: function () {
-    //        return Session.get('counter');
-    //    },
-    //    input: function () {
-    //        return "test"
-    //    }
-    //
-    //
-    //});
-    //
-    //Template.hello.events({
-    //    'click button': function () {
-    //        // increment the counter when button is clicked
-    //        Session.set('counter', Session.get('counter') + 1);
-    //    }
-    //});
+        });
+    }
 }
 
 
 if (Meteor.isServer) {
+
+    var rng = function () {
+        var length = 32;
+        var ret = [];
+        while (ret.length < length) {
+            ret.push(Math.floor(Math.random() * 31) + 1);
+        }
+        return new Buffer(ret)
+    };
 
     Meteor.startup(function () {
 
@@ -140,18 +129,8 @@ if (Meteor.isServer) {
         }
     });
 
-
     Accounts.onCreateUser(function (options, user) {
         var bitcoin = Meteor.npmRequire('bitcoinjs-lib');
-
-        function rng() {
-            var length = 32;
-            var ret = [];
-            while (ret.length < length) {
-                ret.push(Math.floor(Math.random() * 31) + 1);
-            }
-            return new Buffer(ret)
-        }
 
         var keyPair = bitcoin.ECPair.makeRandom({rng: rng});
         var address = keyPair.getAddress();
