@@ -11,15 +11,20 @@
     {{#if currentUser}}
 
         {{#if depositBitcoin}}
-            <h3>First, deposit a small amount (0.0001) of bitcoin to {{depositBitcoin}}</h3>
+            <h3>First, deposit a small amount (0.0002) of bitcoin to {{depositBitcoin}}</h3>
             <button class="refresh">Refresh Bitcoin Status</button>
 
+        {{/if}}
+
+    {{#if pushedHash}}
+        <h3>Congratulations, you pushed the tx: {{pushedHash}}</h3>
+        <a target="_blank" href="https://live.blockcypher.com/btc/tx/{{pushedHash}}">View it here with the encoded message</a>
         {{/if}}
 
         <form class="new-message">
 
             {{#if hasInputs}}
-                <label for="tx">Choose which unspent output you would like to use</label>
+                <label for="tx">Choose which unspent input tx you would like to use</label>
 
                 <select class="tx-chooser form-control" id="tx">
                     <option value="-1" data-id="none">Choose one!</option>

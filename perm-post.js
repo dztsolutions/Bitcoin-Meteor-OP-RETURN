@@ -6,12 +6,41 @@ createdRecords = new Mongo.Collection("createdRecords");
 // after tx is broadcasted, enter the tx that was spent into SpentTx db
 // after tx is broadcasted, enter the tx that was created into createdRecords
 
+function byteCount(s) {
+    return encodeURI(s).split(/%..|./).length - 1;
+}
+
 if (Meteor.isClient) {
     var getBitcoinStatus = function () {
         Meteor.call("checkAddressBalance", function (error, results) {
             if (results.data.length > 0) {
-                Session.set("hasInputs", results.data);
-                Session.set("depositBitcoin", false);
+
+                var filtered_txs = [];
+
+                //remove any spent tx's
+                for (var i = 0; i < results.data.length; i++) {
+                    var amountInDb = SpentTx.find({tx: results.data[i].txid}).fetch()
+                    console.log(amountInDb);
+                    if (amountInDb.length > 0) {
+                        console.log("need to remove this one")
+                    } else {
+                        filtered_txs.push(results.data[i])
+                    }
+
+                }
+
+                if (filtered_txs.length < 1) {
+                    Meteor.call("getBitcoinAddress", function (error, result) {
+                        console.log(result);
+                        Session.set("hasInputs", false);
+
+                        Session.set("depositBitcoin", result);
+                    });
+
+                } else {
+                    Session.set("hasInputs", filtered_txs);
+                    Session.set("depositBitcoin", false);
+                }
 
             } else {
                 Meteor.call("getBitcoinAddress", function (error, result) {
@@ -47,6 +76,9 @@ if (Meteor.isClient) {
             },
             depositBitcoin: function () {
                 return Session.get("depositBitcoin");
+            },
+            pushedHash: function () {
+                return Session.get("pushedHash")
             }
 
 
@@ -66,20 +98,31 @@ if (Meteor.isClient) {
             },
             "click [id=submitOpReturn]": function (evt) {
                 evt.preventDefault();
-                var submission = {
-                    "message": Session.get("opReturnMessage"),
-                    "tx": Session.get("selectedTx")
-                };
+                var message = Session.get("opReturnMessage");
+                var input_tx = Session.get("selectedTx");
 
-                if (!submission.tx) {
+                if (!input_tx) {
                     return alert("please select a tx")
                 }
 
-                if (!submission.message || submission.message === "") {
+                if (!message || message === "") {
                     return alert("please enter a message")
                 }
 
-                console.log(submission);
+                var byteAmount = unescape(encodeURIComponent(message)).length
+
+
+                console.log(byteAmount)
+                if (byteAmount > 40) {
+                    return alert("your string is too big")
+                }
+
+                Meteor.call("publishOPReturnMessage", message, input_tx, function (error, result) {
+                    console.log(result);
+                    Session.set("pushedHash", result);
+                    getBitcoinStatus();
+                });
+
             }
         });
     }
@@ -87,6 +130,9 @@ if (Meteor.isClient) {
 
 
 if (Meteor.isServer) {
+
+    var converter = Meteor.npmRequire('satoshi-bitcoin');
+    var bitcoin = Meteor.npmRequire('bitcoinjs-lib');
 
     var rng = function () {
         var length = 32;
@@ -96,13 +142,6 @@ if (Meteor.isServer) {
         }
         return new Buffer(ret)
     };
-
-    Meteor.startup(function () {
-
-        var converter = Meteor.npmRequire('satoshi-bitcoin');
-        console.log('One Bitcoin equals ' + converter.toSatoshi(parseFloat("0.00010000")));
-
-    });
 
     Meteor.methods({
         checkAddressBalance: function () {
@@ -115,8 +154,55 @@ if (Meteor.isServer) {
 
             this.unblock();
             var url = "https://insight.bitpay.com/api/addr/" + userBitcoinAddress + "/utxo?noCache=2"
-            console.log(url);
             return Meteor.http.call("GET", url);
+        },
+        publishOPReturnMessage: function (message, input_tx) {
+
+            var input_txid = input_tx.txid;
+            var input_vout = input_tx.vout;
+            var amount = input_tx.amount;
+            var data = new Buffer(message);
+            var username = Meteor.user().username;
+            var wif = UsersBitcoin.find({owner: username}).fetch()[0]["wif"];
+
+            var tx = new bitcoin.TransactionBuilder();
+            tx.addInput(input_txid, input_vout);
+            var dataScript = bitcoin.script.nullDataOutput(data);
+            tx.addOutput(dataScript, 0);
+
+            // give some to the miners
+            tx.addOutput('136KE23Y18iSUHLKvhS1AfmFEviz7ts5bQ', (converter.toSatoshi(amount) / 2))
+
+            tx.sign(0, bitcoin.ECPair.fromWIF(wif));
+
+            var txRaw = tx.build().toHex();
+
+            this.unblock();
+
+            var url =  "http://api.blockcypher.com/v1/btc/main/txs/push";
+
+            var result = Meteor.http.post(url, {
+                data: {tx: txRaw}
+            });
+
+            console.log(result.content);
+            console.log(result.data);
+
+            var hash = result.data.tx.hash
+
+            SpentTx.insert({
+                tx: input_txid
+            });
+
+            createdRecords.insert({
+                rawtx: txRaw,
+                owner: Meteor.user().username
+            })
+
+
+            return hash;
+
+
         },
         getBitcoinAddress: function () {
             if (!Meteor.userId()) {
@@ -130,7 +216,6 @@ if (Meteor.isServer) {
     });
 
     Accounts.onCreateUser(function (options, user) {
-        var bitcoin = Meteor.npmRequire('bitcoinjs-lib');
 
         var keyPair = bitcoin.ECPair.makeRandom({rng: rng});
         var address = keyPair.getAddress();
