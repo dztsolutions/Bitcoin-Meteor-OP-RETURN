@@ -6,48 +6,56 @@
 <div class="container">
 
     <h1>Welcome to the OP_RETURN Creator!</h1>
+    <hr/>
     {{> loginButtons}}
+    <hr/>
 
     {{#if currentUser}}
 
         {{#if depositBitcoin}}
             <h3>First, deposit a small amount (0.0002) of bitcoin to {{depositBitcoin}}</h3>
-            <button class="refresh">Refresh Bitcoin Status</button>
+            <button class="btn btn-raised btn-primary" id="refresh">Refresh Bitcoin Status</button>
 
         {{/if}}
 
-    {{#if pushedHash}}
-        <h3>Congratulations, you pushed the tx: {{pushedHash}}</h3>
-        <a target="_blank" href="https://live.blockcypher.com/btc/tx/{{pushedHash}}">View it here with the encoded message</a>
+        {{#if pushedHash}}
+            <h3>Congratulations, you pushed the tx: {{pushedHash}}</h3>
+            <a target="_blank" href="https://live.blockcypher.com/btc/tx/{{pushedHash}}">View it here with the encoded
+                message</a>
         {{/if}}
 
-        <form class="new-message">
-
-            {{#if hasInputs}}
-                <label for="tx">Choose which unspent input tx you would like to use</label>
-
-                <select class="tx-chooser form-control" id="tx">
-                    <option value="-1" data-id="none">Choose one!</option>
-                    {{#each hasInputs}}
-                        <option value="{{@index}}" data-id={{txid}}>{{txid}}</option>
-                    {{/each}}
-                </select>
+        <form class="form-horizontal">
+            <fieldset>
+                <div class="form-group">
 
 
-                <label for="op_return">Enter a message you would like to send to the blockchain</label>
+                    {{#if hasInputs}}
+                        <label class="control-label" for="tx">Choose which unspent input tx you would like to
+                            use</label>
+                        <select class="tx-chooser form-control" id="tx">
+                            <option value="-1" data-id="none">Choose one!</option>
+                            {{#each hasInputs}}
+                                <option value="{{@index}}" data-id={{txid}}>{{txid}}</option>
+                            {{/each}}
+                        </select>
 
-                <input type="text"
-                       name="op_return_message"
-                       id="op_return"
-                       class="form-control"
-                       placeholder="enter a new message to be op_returned here"
-                />
 
-                <br/>
+                        <label class="control-label" for="op_return">Enter a message you would like to send to the
+                            blockchain</label>
+                        <input type="text"
+                               name="op_return_message"
+                               id="op_return"
+                               class="form-control"
+                               placeholder="enter a new message to be op_returned here"
+                        />
 
-                <button class="btn btn-default" id="submitOpReturn" type="button">Submit</button>
+                        <br/>
 
-            {{/if}}
+                        <button class="btn btn-raised btn-primary" id="submitOpReturn" type="button">Submit</button>
+
+                    {{/if}}
+                </div>
+            </fieldset>
 
         </form>
 

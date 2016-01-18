@@ -3,6 +3,8 @@ SpentTx = new Mongo.Collection("spentTx");
 createdRecords = new Mongo.Collection("createdRecords");
 
 if (Meteor.isClient) {
+    $.material.init();
+
     var getBitcoinStatus = function () {
         Meteor.call("checkAddressBalance", function (error, results) {
             if (results.data.length > 0) {
@@ -49,12 +51,15 @@ if (Meteor.isClient) {
         passwordSignupFields: "USERNAME_ONLY"
     });
 
+
+    Tracker.autorun(function () {
+        if (Meteor.userId()) {
+            getBitcoinStatus()
+        }
+    });
+
     if (Meteor.userId()) {
-        Tracker.autorun(function () {
-            if (Meteor.userId()) {
-                getBitcoinStatus()
-            }
-        });
+
         Session.set("hasInputs", false);
         Session.set("depositBitcoin", false);
 
@@ -77,7 +82,7 @@ if (Meteor.isClient) {
         });
 
         Template.body.events({
-            "click .refresh": function () {
+            "click [id=refresh]": function () {
                 getBitcoinStatus()
             },
             "change [id=tx]": function (evt) {
