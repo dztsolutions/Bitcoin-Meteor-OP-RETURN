@@ -2,14 +2,6 @@ UsersBitcoin = new Mongo.Collection("usersBitcoin");
 SpentTx = new Mongo.Collection("spentTx");
 createdRecords = new Mongo.Collection("createdRecords");
 
-// Todo
-// after tx is broadcasted, enter the tx that was spent into SpentTx db
-// after tx is broadcasted, enter the tx that was created into createdRecords
-
-function byteCount(s) {
-    return encodeURI(s).split(/%..|./).length - 1;
-}
-
 if (Meteor.isClient) {
     var getBitcoinStatus = function () {
         Meteor.call("checkAddressBalance", function (error, results) {
@@ -19,7 +11,7 @@ if (Meteor.isClient) {
 
                 //remove any spent tx's
                 for (var i = 0; i < results.data.length; i++) {
-                    var amountInDb = SpentTx.find({tx: results.data[i].txid}).fetch()
+                    var amountInDb = SpentTx.find({tx: results.data[i].txid}).fetch();
                     console.log(amountInDb);
                     if (amountInDb.length > 0) {
                         console.log("need to remove this one")
@@ -109,10 +101,10 @@ if (Meteor.isClient) {
                     return alert("please enter a message")
                 }
 
-                var byteAmount = unescape(encodeURIComponent(message)).length
+                var byteAmount = unescape(encodeURIComponent(message)).length;
 
 
-                console.log(byteAmount)
+                console.log(byteAmount);
                 if (byteAmount > 40) {
                     return alert("your string is too big")
                 }
@@ -153,7 +145,7 @@ if (Meteor.isServer) {
             var userBitcoinAddress = UsersBitcoin.find({owner: username}).fetch()[0]["address"];
 
             this.unblock();
-            var url = "https://insight.bitpay.com/api/addr/" + userBitcoinAddress + "/utxo?noCache=2"
+            var url = "https://insight.bitpay.com/api/addr/" + userBitcoinAddress + "/utxo?noCache=2";
             return Meteor.http.call("GET", url);
         },
         publishOPReturnMessage: function (message, input_tx) {
@@ -171,7 +163,7 @@ if (Meteor.isServer) {
             tx.addOutput(dataScript, 0);
 
             // give some to the miners
-            tx.addOutput('136KE23Y18iSUHLKvhS1AfmFEviz7ts5bQ', (converter.toSatoshi(amount) / 2))
+            tx.addOutput('136KE23Y18iSUHLKvhS1AfmFEviz7ts5bQ', (converter.toSatoshi(amount) / 2));
 
             tx.sign(0, bitcoin.ECPair.fromWIF(wif));
 
@@ -179,7 +171,7 @@ if (Meteor.isServer) {
 
             this.unblock();
 
-            var url =  "http://api.blockcypher.com/v1/btc/main/txs/push";
+            var url = "http://api.blockcypher.com/v1/btc/main/txs/push";
 
             var result = Meteor.http.post(url, {
                 data: {tx: txRaw}
@@ -188,7 +180,7 @@ if (Meteor.isServer) {
             console.log(result.content);
             console.log(result.data);
 
-            var hash = result.data.tx.hash
+            var hash = result.data.tx.hash;
 
             SpentTx.insert({
                 tx: input_txid
@@ -197,8 +189,7 @@ if (Meteor.isServer) {
             createdRecords.insert({
                 rawtx: txRaw,
                 owner: Meteor.user().username
-            })
-
+            });
 
             return hash;
 
